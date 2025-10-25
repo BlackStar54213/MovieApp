@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Movie, MovieState, MovieAction } from '../types/movie.types';
+import { Movie, MovieState, MovieAction, Genre } from '../types/movie.types';
 
 const FAVORITES_KEY = '@tmdb_favorites_v1';
 
@@ -10,6 +10,9 @@ const initialState: MovieState = {
     favorites: [],
     loading: false,
     error: null,
+    // New state initialization
+    genres: [],
+    selectedGenreId: null, // null means 'All Movies'
 };
 
 const movieReducer = (
@@ -36,6 +39,11 @@ const movieReducer = (
                     ? state.favorites.filter((f) => f !== id)
                     : [...state.favorites, id],
             };
+        // New Reducer Cases for Genre Filtering
+        case 'SET_GENRES':
+            return { ...state, genres: action.payload as Genre[] };
+        case 'SET_GENRE_FILTER':
+            return { ...state, selectedGenreId: action.payload as number | null };
         default:
             return state;
     }

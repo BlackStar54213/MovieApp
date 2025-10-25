@@ -4,12 +4,22 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-// @ts-ignore: Missing type declarations for 'react-native-vector-icons/Ionicons'
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Image, ImageStyle } from 'react-native'; // <-- Import Image and ImageStyle
+// @ts-ignore: We are now using images, so we can comment out or remove this line
+// import Ionicons from 'react-native-vector-icons/Ionicons'; 
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import MovieDetailScreen from '../screens/MovieDetailScreen';
+
+// --- YOUR PNG IMAGE IMPORTS ---
+const heartActive = require('../../assets/icons/heart_active.png');
+const heartInactive = require('../../assets/icons/heart_inactive.png');
+const homeActive = require('../../assets/icons/home_active.png');
+const homeInactive = require('../../assets/icons/home_inactive.png');
+const searchActive = require('../../assets/icons/search_active.png');
+const searchInactive = require('../../assets/icons/search_inactive.png');
+// --- END IMAGE IMPORTS ---
 
 type TabParamList = {
     Home: undefined;
@@ -25,36 +35,52 @@ type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
+// Define a style object for the icon size
+const ICON_SIZE: ImageStyle = {
+    width: 30,
+    height: 30,
+};
+
+
 function Tabs() {
     return (
         <Tab.Navigator
+            id={undefined}
             screenOptions={({ route }) => ({
-                // --- MODIFICATION HERE: Set headerShown to true or remove it ---
-                headerShown: true, // Now the header will be visible
+                headerShown: true,
                 headerStyle: {
-                    backgroundColor: '#121212', // Match tab bar background
-                    borderBottomWidth: 0, // Optional: remove header border
-                    height: 90, // Optional: adjust height
+                    backgroundColor: '#121212',
+                    borderBottomWidth: 0,
+                    height: 100,
                 },
                 headerTitleStyle: {
-                    color: '#fff', // White text color
-                    fontSize: 24, // Larger title font
+                    color: '#fff',
+                    fontSize: 24,
                     fontWeight: 'bold',
                 },
-                // --- END MODIFICATION ---
-                tabBarIcon: ({ color, size }) => {
-                    let iconName: React.ComponentProps<typeof Ionicons>['name'] = 'home';
+
+                // --- MODIFIED tabBarIcon TO USE PNG ASSETS ---
+                tabBarIcon: ({ focused }) => { // We use 'focused' to switch between images
+                    let iconSource;
 
                     if (route.name === 'Home') {
-                        iconName = 'home';
+                        iconSource = focused ? homeActive : homeInactive;
                     } else if (route.name === 'Search') {
-                        iconName = 'search';
+                        iconSource = focused ? searchActive : searchInactive;
                     } else if (route.name === 'Favorites') {
-                        iconName = 'heart';
+                        iconSource = focused ? heartActive : heartInactive;
                     }
 
-                    return <Ionicons name={iconName} size={size} color={color} />;
+                    return (
+                        <Image
+                            source={iconSource}
+                            style={ICON_SIZE}
+                            resizeMode="contain" // Ensures the image scales correctly
+                        />
+                    );
                 },
+                // --- END MODIFIED tabBarIcon ---
+
                 tabBarActiveTintColor: '#e50914',
                 tabBarInactiveTintColor: '#9e9e9e',
                 tabBarStyle: {
@@ -68,7 +94,6 @@ function Tabs() {
                 },
             })}
         >
-            {/* The 'title' option here provides the header text */}
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
             <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Search' }} />
             <Tab.Screen name="Favorites" component={FavoritesScreen} options={{ title: 'Favorites' }} />
@@ -79,9 +104,7 @@ function Tabs() {
 export default function AppNavigator() {
     return (
         <NavigationContainer>
-            {/* The main Stack Navigator needs to have headerShown: false for the RootTabs screen
-                so the tabs don't show an extra stack header above the tab headers. */}
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="RootTabs" component={Tabs} />
                 <Stack.Screen
                     name="MovieDetail"
@@ -89,11 +112,10 @@ export default function AppNavigator() {
                     options={{
                         headerShown: true,
                         title: 'Movie Details',
-                        // Customize the detail header to match the theme
                         headerStyle: {
                             backgroundColor: '#121212',
                         },
-                        headerTintColor: '#fff', // Back arrow color
+                        headerTintColor: '#fff',
                         headerTitleStyle: {
                             color: '#fff',
                         },

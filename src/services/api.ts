@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { TMDB_API_KEY, TMDB_BASE_URL, TMDB_IMAGE_BASE_URL } from '@env';
-import { Movie, MovieDetail } from '../types/movie.types';
+import { Movie, MovieDetail, Genre } from '../types/movie.types';
 
 const api = axios.create({
     baseURL: TMDB_BASE_URL,
@@ -16,11 +16,30 @@ interface PopularMoviesResponse {
     total_results: number;
 }
 
+interface GenreListResponse {
+    genres: Genre[];
+}
+
 export const movieService = {
-    getPopularMovies: async (page: number = 1): Promise<PopularMoviesResponse> => {
-        const response = await api.get<PopularMoviesResponse>('/movie/popular', {
-            params: { page }
-        });
+    // MODIFIED to accept genreId
+    getPopularMovies: async (genreId: number | null = null, page: number = 1): Promise<PopularMoviesResponse> => {
+        let endpoint = '/movie/popular';
+        const params: Record<string, any> = { page };
+
+        if (genreId !== null) {
+            // Use the 'discover' endpoint for filtering
+            endpoint = '/discover/movie';
+            params.with_genres = genreId;
+            params.sort_by = 'popularity.desc'; // To ensure we get popular movies within that genre
+        }
+
+        const response = await api.get<PopularMoviesResponse>(endpoint, { params });
+        return response.data;
+    },
+
+    // NEW function to fetch all genres
+    getGenres: async (): Promise<GenreListResponse> => {
+        const response = await api.get<GenreListResponse>('/genre/movie/list');
         return response.data;
     },
 

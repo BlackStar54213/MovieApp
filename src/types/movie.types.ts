@@ -28,6 +28,9 @@ export interface MovieState {
     favorites: number[];
     loading: boolean;
     error: string | null;
+    // New properties for filtering
+    genres: Genre[];
+    selectedGenreId: number | null;
 }
 
 export type MovieAction =
@@ -35,4 +38,7 @@ export type MovieAction =
     | { type: 'SET_SEARCH_RESULTS'; payload: Movie[] }
     | { type: 'TOGGLE_FAVORITE'; payload: number }
     | { type: 'SET_LOADING'; payload: boolean }
-    | { type: 'SET_ERROR'; payload: string | null };
+    | { type: 'SET_ERROR'; payload: string | null }
+    // New actions for filtering
+    | { type: 'SET_GENRES'; payload: Genre[] }
+    | { type: 'SET_GENRE_FILTER'; payload: number | null };

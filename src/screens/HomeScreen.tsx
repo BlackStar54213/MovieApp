@@ -1,5 +1,3 @@
-// src/screens/HomeScreen.tsx
-
 import React, { useEffect } from 'react';
 import {
     View,
@@ -7,13 +5,15 @@ import {
     StyleSheet,
     ActivityIndicator,
     Text,
-    Button,
+    TouchableOpacity,
+    ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { movieService } from '../services/api';
 import { useMovieContext } from '../context/MovieContext';
 import MovieCard from '../components/MovieCard';
-import { Movie } from '../types/movie.types';
+import { Movie, Genre } from '../types/movie.types';
+
 
 type RootStackParamList = {
     MovieDetail: { movieId: number };
@@ -27,15 +27,37 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const { state, dispatch } = useMovieContext();
+    // Destructure new state properties
+    const { loading, error, movies, genres, selectedGenreId } = state;
 
+    // Load genres once on mount
     useEffect(() => {
-        loadPopularMovies();
+        loadGenres();
     }, []);
 
-    const loadPopularMovies = async () => {
+    // Rerun movie loading whenever the selectedGenreId changes
+    useEffect(() => {
+        loadPopularMovies(selectedGenreId);
+    }, [selectedGenreId]);
+
+
+    const loadGenres = async () => {
         try {
-            dispatch({ type: 'SET_LOADING', payload: true });
-            const data = await movieService.getPopularMovies();
+            const data = await movieService.getGenres();
+            dispatch({ type: 'SET_GENRES', payload: data.genres });
+        } catch (e) {
+            console.error('Error loading genres:', e);
+        }
+    }
+
+    const loadPopularMovies = async (genreId: number | null) => {
+        try {
+            // Only set loading to true if not already loading
+            if (!loading) {
+                dispatch({ type: 'SET_LOADING', payload: true });
+            }
+            // Pass the selected genreId to the service
+            const data = await movieService.getPopularMovies(genreId);
             dispatch({ type: 'SET_MOVIES', payload: data.results });
         } catch (error) {
             dispatch({ type: 'SET_ERROR', payload: 'Failed to load movies' });
@@ -43,28 +65,90 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         }
     };
 
+    const handleGenreSelect = (genreId: number | null) => {
+        // Dispatch action to update the selected genre ID in the context
+        dispatch({ type: 'SET_GENRE_FILTER', payload: genreId });
+        // The useEffect above will automatically call loadPopularMovies
+    };
+
     const renderMovieItem = ({ item }: { item: Movie }) => (
         <MovieCard movie={item} onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })} />
     );
 
+    const renderGenrePill = (genre: Genre) => {
+        const isSelected = genre.id === selectedGenreId;
+        return (
+            <TouchableOpacity
+                key={genre.id}
+                style={[
+                    styles.genrePill,
+                    isSelected ? styles.genrePillSelected : styles.genrePillUnselected,
+                ]}
+                onPress={() => handleGenreSelect(genre.id)}
+            >
+                <Text style={isSelected ? styles.genreTextSelected : styles.genreTextUnselected}>
+                    {genre.name}
+                </Text>
+            </TouchableOpacity>
+        );
+    };
+
     return (
         <View style={styles.container}>
-            {state.loading ? (
+            {/* NEW: Genre Filter Bar */}
+            <View style={styles.genreBar}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {/* "All Movies" Button */}
+                    <TouchableOpacity
+                        style={[
+                            styles.genrePill,
+                            !selectedGenreId ? styles.genrePillSelected : styles.genrePillUnselected,
+                            styles.allMoviesPill
+                        ]}
+                        onPress={() => handleGenreSelect(null)}
+                    >
+                        <Text style={!selectedGenreId ? styles.genreTextSelected : styles.genreTextUnselected}>
+                            All
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Render genres */}
+                    {genres.map((genre) => (
+                        <TouchableOpacity
+                            key={genre.id}
+                            style={[
+                                styles.genrePill,
+                                genre.id === selectedGenreId ? styles.genrePillSelected : styles.genrePillUnselected,
+                            ]}
+                            onPress={() => handleGenreSelect(genre.id)}
+                        >
+                            <Text style={genre.id === selectedGenreId ? styles.genreTextSelected : styles.genreTextUnselected}>
+                                {genre.name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            {/* Main Content (Loader, Error, or List) */}
+            {loading && movies.length === 0 ? (
+                // Only show large loader if no movies have been loaded yet
                 <ActivityIndicator size="large" color="#e50914" style={styles.loader} />
-            ) : state.error ? (
+            ) : error ? (
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{state.error}</Text>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity onPress={() => loadPopularMovies(selectedGenreId)} style={styles.retryButton}>
+                        <Text style={styles.retryButtonText}>Retry Loading</Text>
+                    </TouchableOpacity>
                 </View>
             ) : (
-                <>
-                    <FlatList
-                        data={state.movies}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={renderMovieItem}
-                        numColumns={2}
-                        contentContainerStyle={styles.list}
-                    />
-                </>
+                <FlatList
+                    data={movies}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={renderMovieItem}
+                    numColumns={2}
+                    contentContainerStyle={styles.list}
+                />
             )}
         </View>
     );
@@ -75,6 +159,50 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#141414',
     },
+    // NEW Styles for Genre Filter Bar
+    genreBar: {
+        paddingVertical: 10,
+        backgroundColor: '#141414',
+        borderBottomWidth: 1,
+        marginBottom: 15,
+        borderBottomColor: '#222',
+    },
+    genrePill: {
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginHorizontal: 5,
+        justifyContent: 'center',
+    },
+    allMoviesPill: {
+        marginLeft: 10,
+    },
+    genrePillSelected: {
+        backgroundColor: '#e50914', // Netflix Red
+    },
+    genrePillUnselected: {
+        backgroundColor: '#333333',
+        borderWidth: 1,
+        borderColor: '#555555',
+    },
+    genreTextSelected: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+    },
+    genreTextUnselected: {
+        color: '#aaaaaa',
+    },
+    retryButton: {
+        backgroundColor: '#e50914',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 15,
+    },
+    retryButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    // Existing styles
     loader: {
         marginTop: 50,
     },
