@@ -29,16 +29,13 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
     const [loadingMissing, setLoadingMissing] = useState(false);
     const [missingMovies, setMissingMovies] = useState<Movie[]>([]);
 
-    // Build a lookup from local lists (movies + searchResults)
     const combinedLocal: Movie[] = [...state.movies, ...state.searchResults];
     const localMap = new Map<number, Movie>(combinedLocal.map(m => [m.id, m]));
 
-    // Prepare favorite movie objects: take from local first
     const favoriteLocalMovies: Movie[] = state.favorites
         .map(id => localMap.get(id))
         .filter(Boolean) as Movie[];
 
-    // Fetch any favorites not present in local lists
     useEffect(() => {
         let mounted = true;
         const missingIds = state.favorites.filter(id => !localMap.has(id));
@@ -53,7 +50,7 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
                 const promises = missingIds.map(id => movieService.getMovieDetails(id));
                 const results = (await Promise.all(promises)) as MovieDetail[];
                 if (!mounted) return;
-                // Normalize MovieDetail -> Movie minimal shape
+
                 const normalized: Movie[] = results.map(r => ({
                     id: r.id,
                     title: r.title,

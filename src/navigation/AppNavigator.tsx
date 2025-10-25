@@ -1,25 +1,19 @@
-// AppNavigator.tsx
-
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image, ImageStyle } from 'react-native'; // <-- Import Image and ImageStyle
-// @ts-ignore: We are now using images, so we can comment out or remove this line
-// import Ionicons from 'react-native-vector-icons/Ionicons'; 
+import { Image, ImageStyle } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import MovieDetailScreen from '../screens/MovieDetailScreen';
 
-// --- YOUR PNG IMAGE IMPORTS ---
 const heartActive = require('../../assets/icons/heart_active.png');
 const heartInactive = require('../../assets/icons/heart_inactive.png');
 const homeActive = require('../../assets/icons/home_active.png');
 const homeInactive = require('../../assets/icons/home_inactive.png');
 const searchActive = require('../../assets/icons/search_active.png');
 const searchInactive = require('../../assets/icons/search_inactive.png');
-// --- END IMAGE IMPORTS ---
 
 type TabParamList = {
     Home: undefined;
@@ -35,12 +29,10 @@ type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// Define a style object for the icon size
 const ICON_SIZE: ImageStyle = {
     width: 30,
     height: 30,
 };
-
 
 function Tabs() {
     return (
@@ -59,8 +51,7 @@ function Tabs() {
                     fontWeight: 'bold',
                 },
 
-                // --- MODIFIED tabBarIcon TO USE PNG ASSETS ---
-                tabBarIcon: ({ focused }) => { // We use 'focused' to switch between images
+                tabBarIcon: ({ focused }) => {
                     let iconSource;
 
                     if (route.name === 'Home') {
@@ -75,11 +66,10 @@ function Tabs() {
                         <Image
                             source={iconSource}
                             style={ICON_SIZE}
-                            resizeMode="contain" // Ensures the image scales correctly
+                            resizeMode="contain"
                         />
                     );
                 },
-                // --- END MODIFIED tabBarIcon ---
 
                 tabBarActiveTintColor: '#e50914',
                 tabBarInactiveTintColor: '#9e9e9e',

@@ -13,7 +13,7 @@ import { movieService } from '../services/api';
 import { Movie } from '../types/movie.types';
 
 interface Props {
-    navigation: any; // from bottom tab; we navigate to the stack MovieDetail
+    navigation: any;
 }
 
 const SearchScreen: React.FC<Props> = ({ navigation }) => {

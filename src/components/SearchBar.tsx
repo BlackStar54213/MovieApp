@@ -1,4 +1,4 @@
-// src/components/SearchBar.tsx
+
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -14,7 +14,6 @@ import { saveSearchTerm, getSearchHistory } from '../utils/storageUtils';
 
 type SearchBarProps = {
     onSearch: (query: string) => void;
-    // optional callbacks for backward compatibility
     onFocusChange?: (isFocused: boolean) => void;
     onTermSelect?: (term: string) => void;
     initialValue?: string;
@@ -54,7 +53,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             await saveSearchTerm(trimmed);
             await loadHistory();
         } catch (err) {
-            // ignore
+            console.error('Failed to save search term', err);
         }
         onSearch(trimmed);
         setIsFocused(false);
@@ -89,7 +88,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         onFocusChange?.(true);
                     }}
                     onBlur={() => {
-                        // delay hide so taps on dropdown register
                         setTimeout(() => {
                             setIsFocused(false);
                             onFocusChange?.(false);
@@ -135,7 +133,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
 const styles = StyleSheet.create({
     wrapper: {
-        zIndex: 999, // ensure dropdown shows above other content
+        zIndex: 999,
         ...Platform.select({
             ios: { marginTop: 8 },
             android: { marginTop: 8 },
@@ -171,7 +169,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         left: 0,
         right: 0,
-        top: 64, // positions dropdown below the SearchBar; adjust if your bar is taller
+        top: 64,
         alignItems: 'center',
         zIndex: 999,
     },

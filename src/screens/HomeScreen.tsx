@@ -27,15 +27,12 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const { state, dispatch } = useMovieContext();
-    // Destructure new state properties
     const { loading, error, movies, genres, selectedGenreId } = state;
 
-    // Load genres once on mount
     useEffect(() => {
         loadGenres();
     }, []);
 
-    // Rerun movie loading whenever the selectedGenreId changes
     useEffect(() => {
         loadPopularMovies(selectedGenreId);
     }, [selectedGenreId]);
@@ -52,11 +49,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     const loadPopularMovies = async (genreId: number | null) => {
         try {
-            // Only set loading to true if not already loading
             if (!loading) {
                 dispatch({ type: 'SET_LOADING', payload: true });
             }
-            // Pass the selected genreId to the service
             const data = await movieService.getPopularMovies(genreId);
             dispatch({ type: 'SET_MOVIES', payload: data.results });
         } catch (error) {
@@ -66,9 +61,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     };
 
     const handleGenreSelect = (genreId: number | null) => {
-        // Dispatch action to update the selected genre ID in the context
         dispatch({ type: 'SET_GENRE_FILTER', payload: genreId });
-        // The useEffect above will automatically call loadPopularMovies
     };
 
     const renderMovieItem = ({ item }: { item: Movie }) => (
@@ -95,10 +88,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* NEW: Genre Filter Bar */}
             <View style={styles.genreBar}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {/* "All Movies" Button */}
                     <TouchableOpacity
                         style={[
                             styles.genrePill,
@@ -112,7 +103,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
 
-                    {/* Render genres */}
                     {genres.map((genre) => (
                         <TouchableOpacity
                             key={genre.id}
@@ -130,9 +120,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </ScrollView>
             </View>
 
-            {/* Main Content (Loader, Error, or List) */}
             {loading && movies.length === 0 ? (
-                // Only show large loader if no movies have been loaded yet
                 <ActivityIndicator size="large" color="#e50914" style={styles.loader} />
             ) : error ? (
                 <View style={styles.errorContainer}>
@@ -159,7 +147,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#141414',
     },
-    // NEW Styles for Genre Filter Bar
     genreBar: {
         paddingVertical: 10,
         backgroundColor: '#141414',
@@ -178,7 +165,7 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
     genrePillSelected: {
-        backgroundColor: '#e50914', // Netflix Red
+        backgroundColor: '#e50914',
     },
     genrePillUnselected: {
         backgroundColor: '#333333',
@@ -202,7 +189,6 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
     },
-    // Existing styles
     loader: {
         marginTop: 50,
     },

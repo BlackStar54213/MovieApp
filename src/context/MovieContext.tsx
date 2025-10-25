@@ -10,9 +10,8 @@ const initialState: MovieState = {
     favorites: [],
     loading: false,
     error: null,
-    // New state initialization
     genres: [],
-    selectedGenreId: null, // null means 'All Movies'
+    selectedGenreId: null,
 };
 
 const movieReducer = (
@@ -39,7 +38,6 @@ const movieReducer = (
                     ? state.favorites.filter((f) => f !== id)
                     : [...state.favorites, id],
             };
-        // New Reducer Cases for Genre Filtering
         case 'SET_GENRES':
             return { ...state, genres: action.payload as Genre[] };
         case 'SET_GENRE_FILTER':
@@ -62,7 +60,6 @@ const MovieContext = createContext<MovieContextType>({
 export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(movieReducer, initialState);
 
-    // Load persisted favorites on mount
     useEffect(() => {
         (async () => {
             try {
@@ -77,7 +74,6 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         })();
     }, []);
 
-    // Persist favorites whenever they change
     useEffect(() => {
         (async () => {
             try {
