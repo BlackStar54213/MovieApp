@@ -58,6 +58,7 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
                     release_date: r.release_date,
                     vote_average: r.vote_average,
                     overview: r.overview,
+                    backdrop_path: r.backdrop_path,
                 }));
                 setMissingMovies(normalized);
             } catch (err) {

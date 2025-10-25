@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { TMDB_API_KEY, TMDB_BASE_URL, TMDB_IMAGE_BASE_URL } from '@env';
-import { Movie, MovieDetail, Genre } from '../types/movie.types';
+import { Movie, MovieDetail, Genre, PopularMoviesResponse } from '../types/movie.types';
 
 const api = axios.create({
     baseURL: TMDB_BASE_URL,
@@ -8,13 +8,6 @@ const api = axios.create({
         api_key: TMDB_API_KEY,
     },
 });
-
-interface PopularMoviesResponse {
-    results: Movie[];
-    page: number;
-    total_pages: number;
-    total_results: number;
-}
 
 interface GenreListResponse {
     genres: Genre[];

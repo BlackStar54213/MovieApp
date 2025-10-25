@@ -9,11 +9,9 @@ import {
     ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { movieService } from '../services/api';
 import { useMovieContext } from '../context/MovieContext';
 import MovieCard from '../components/MovieCard';
 import { Movie, Genre } from '../types/movie.types';
-
 
 type RootStackParamList = {
     MovieDetail: { movieId: number };
@@ -26,37 +24,18 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-    const { state, dispatch } = useMovieContext();
-    const { loading, error, movies, genres, selectedGenreId } = state;
+    const { state, dispatch, getPopularMovies } = useMovieContext();
+    const { loading, error, movies, genres, selectedGenreId, currentPage, totalPages } = state;
 
     useEffect(() => {
-        loadGenres();
-    }, []);
-
-    useEffect(() => {
-        loadPopularMovies(selectedGenreId);
+        getPopularMovies(selectedGenreId, 1);
     }, [selectedGenreId]);
 
+    const handleLoadMore = () => {
+        if (loading) return;
 
-    const loadGenres = async () => {
-        try {
-            const data = await movieService.getGenres();
-            dispatch({ type: 'SET_GENRES', payload: data.genres });
-        } catch (e) {
-            console.error('Error loading genres:', e);
-        }
-    }
-
-    const loadPopularMovies = async (genreId: number | null) => {
-        try {
-            if (!loading) {
-                dispatch({ type: 'SET_LOADING', payload: true });
-            }
-            const data = await movieService.getPopularMovies(genreId);
-            dispatch({ type: 'SET_MOVIES', payload: data.results });
-        } catch (error) {
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to load movies' });
-            console.error('Error loading movies:', error);
+        if (currentPage < totalPages) {
+            getPopularMovies(selectedGenreId, currentPage + 1);
         }
     };
 
@@ -67,6 +46,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const renderMovieItem = ({ item }: { item: Movie }) => (
         <MovieCard movie={item} onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })} />
     );
+
+    const renderFooter = () => {
+        if (!loading || currentPage === 0) return null;
+        return (
+            <ActivityIndicator size="small" color="#e50914" style={styles.footerLoader} />
+        );
+    };
 
     const renderGenrePill = (genre: Genre) => {
         const isSelected = genre.id === selectedGenreId;
@@ -86,6 +72,27 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         );
     };
 
+    if (loading && movies.length === 0) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#e50914" style={styles.loader} />
+            </View>
+        );
+    }
+
+    if (error && movies.length === 0) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity onPress={() => getPopularMovies(selectedGenreId, 1)} style={styles.retryButton}>
+                        <Text style={styles.retryButtonText}>Retry Loading</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.genreBar}>
@@ -103,41 +110,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
 
-                    {genres.map((genre) => (
-                        <TouchableOpacity
-                            key={genre.id}
-                            style={[
-                                styles.genrePill,
-                                genre.id === selectedGenreId ? styles.genrePillSelected : styles.genrePillUnselected,
-                            ]}
-                            onPress={() => handleGenreSelect(genre.id)}
-                        >
-                            <Text style={genre.id === selectedGenreId ? styles.genreTextSelected : styles.genreTextUnselected}>
-                                {genre.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                    {genres.map(renderGenrePill)}
                 </ScrollView>
             </View>
 
-            {loading && movies.length === 0 ? (
-                <ActivityIndicator size="large" color="#e50914" style={styles.loader} />
-            ) : error ? (
-                <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity onPress={() => loadPopularMovies(selectedGenreId)} style={styles.retryButton}>
-                        <Text style={styles.retryButtonText}>Retry Loading</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                <FlatList
-                    data={movies}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={renderMovieItem}
-                    numColumns={2}
-                    contentContainerStyle={styles.list}
-                />
-            )}
+            <FlatList
+                data={movies}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderMovieItem}
+                numColumns={2}
+                contentContainerStyle={styles.list}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={renderFooter}
+            />
         </View>
     );
 };
@@ -191,6 +177,9 @@ const styles = StyleSheet.create({
     },
     loader: {
         marginTop: 50,
+    },
+    footerLoader: {
+        marginVertical: 20,
     },
     errorContainer: {
         flex: 1,
